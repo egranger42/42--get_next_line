@@ -12,40 +12,50 @@
 
 #include "../inc/get_next_line.h"
 
-#define MAX_FDS 512
+static t_ht	*g_table = NULL;
+static int	g_initialized = 0;
 
-static t_gnl_state	g_states[MAX_FDS];
-static int			g_initialized = 0;
+static uint64_t	hash_fd(const void *key)
+{
+	return ((uintptr_t)key * 2654435761UL);
+}
+
+static int	cmp_fd(const void *key1, const void *key2)
+{
+	return ((intptr_t)key1 != (intptr_t)key2);
+}
 
 static void	init_states(void)
 {
-	int	i;
-
-	i = 0;
-	while (i < MAX_FDS)
-	{
-		g_states[i].pos = 0;
-		g_states[i].len = 0;
-		g_states[i].fd = -1;
-		i++;
-	}
-	g_initialized = 1;
+	g_table = ht_create(16, hash_fd, cmp_fd);
+	if (g_table)
+		g_initialized = 1;
 }
 
 t_gnl_state	*gnl_get_state(int fd)
 {
-	int	index;
+	t_gnl_state	*state;
+	t_ht_status	status;
 
 	if (fd < 0)
 		return (NULL);
 	if (!g_initialized)
 		init_states();
-	index = fd % MAX_FDS;
-	if (g_states[index].fd != fd)
+	if (!g_table)
+		return (NULL);
+	status = ht_get(g_table, (void *)(uintptr_t)fd, (void **)&state);
+	if (status == HT_SUCCESS)
+		return (state);
+	state = malloc(sizeof(t_gnl_state));
+	if (!state)
+		return (NULL);
+	state->pos = 0;
+	state->len = 0;
+	state->fd = fd;
+	if (ht_add(g_table, (void *)(uintptr_t)fd, state) != HT_SUCCESS)
 	{
-		g_states[index].pos = 0;
-		g_states[index].len = 0;
-		g_states[index].fd = fd;
+		free(state);
+		return (NULL);
 	}
-	return (&g_states[index]);
+	return (state);
 }

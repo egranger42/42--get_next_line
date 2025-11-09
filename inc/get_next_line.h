@@ -16,6 +16,8 @@
 # include <stdlib.h>
 # include <unistd.h>
 # include <string.h>
+# include <stdint.h>
+# include "../../42--hash/inc/ht.h"
 
 # define GNL_BUFFER_SIZE 4096
 
