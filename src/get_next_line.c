@@ -1,40 +1,37 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   get_next_line.c                                    :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: egranger <egranger@42.fr>                  +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/11/09 10:00:51 by egranger          #+#    #+#             */
-/*   Updated: 2025/11/09 10:00:59 by egranger         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "../inc/get_next_line.h"
 
-char *get_next_line(int fd)
+static t_node	**get_node_ptr(int fd)
 {
-	t_gnl_state	*state;
-	t_gnl_vars	vars;
-	int			status;
+	static t_node	*fd_buffers[256];
+	if (fd >= 0 && fd < 256)
+		return (&fd_buffers[fd]);
+	return (NULL);
+}
 
-	state = gnl_get_state(fd);
-	if (!state)
+char	*get_next_line(int fd)
+{
+	t_node	**start;
+	t_node	*last;
+	size_t	len;
+	char	*line;
+
+	if (!(start = get_node_ptr(fd)))
 		return (NULL);
-	vars = gnl_init(fd, state);
-	if (!vars.line)
+	if (!*start && !(*start = node_alloc(BUFFER_SIZE)))
 		return (NULL);
-	while (1)
+	while (!find_newline(*start, &len))
 	{
-		status = gnl_read(fd, state, &vars);
-		if (status == 2)
-			return (vars.line);
-		if (status == -1)
-			return (NULL);
-		status = gnl_end(state, &vars);
-		if (status == 1)
-			return (vars.line);
-		if (status == -1)
-			return (NULL);
+		if (!extend_buffer(start))
+			break ;
+		last = *start;
+		while (last->next)
+			last = last->next;
+		if (read_into_node(last, fd) <= 0)
+			break ;
 	}
+	if (len == 0)
+		return (consume_nodes(start), NULL);
+	line = extract_line(*start, len);
+	consume_nodes(start);
+	return (line);
 }

@@ -18,27 +18,26 @@ OBJ_DIR = o
 INC_DIR = inc
 
 SRCS = $(SRC_DIR)/get_next_line.c \
-	$(SRC_DIR)/gnl_end.c \
-	$(SRC_DIR)/gnl_get_state.c \
-	$(SRC_DIR)/gnl_init.c \
-	$(SRC_DIR)/gnl_read.c
+	$(SRC_DIR)/get_next_line_flush.c \
+	$(SRC_DIR)/find_newline.c \
+	$(SRC_DIR)/read_into_node.c \
+	$(SRC_DIR)/extract_line.c \
+	$(SRC_DIR)/consume_nodes.c \
+	$(SRC_DIR)/extend_buffer.c \
+	$(SRC_DIR)/node_alloc.c \
+	$(SRC_DIR)/node_free.c
 
 OBJS = $(SRCS:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 
 CC = cc
-CFLAGS = -Wall -Wextra -Werror -I$(INC_DIR) -I../inc -I../42--hash/inc
+CFLAGS = -Wall -Wextra -Werror -I$(INC_DIR) -I../inc
 AR = ar rcs
-HT_LIB = ../42--hash/libht.a
-HT_DIR = ../42--hash
 
 all: $(NAME)
 
-$(NAME): $(OBJS) $(HT_LIB)
+$(NAME): $(OBJS)
 	mkdir -p $(BIN_DIR)
-	mkdir -p $(OBJ_DIR)/ht_temp
-	cd $(OBJ_DIR)/ht_temp && ar x $(HT_LIB)
-	$(AR) $(NAME) $(OBJS) $(OBJ_DIR)/ht_temp/*.o
-	rm -rf $(OBJ_DIR)/ht_temp
+	$(AR) $(NAME) $(OBJS)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	mkdir -p $(OBJ_DIR)

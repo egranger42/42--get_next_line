@@ -30,15 +30,12 @@ typedef struct s_node
 }	t_node;
 
 char	*get_next_line(int fd);
-void	get_next_line_flush(int fd);
-
-int		find_newline(t_node *start, size_t *line_len);
-int		read_into_node(t_node *node, int fd);
-char	*extract_line(t_node *start, size_t len);
-void	consume_nodes(t_node **start);
-int		extend_buffer(t_node **start);
-
 t_node	*node_alloc(size_t capacity);
+void	node_init(t_node *node, size_t capacity);
 void	node_free(t_node *node);
+void	node_free_list(t_node **start);
+int		read_into_node(t_node *node, int fd);
+int		find_newline(t_node *start, size_t *line_len);
+char	*extract_line(t_node *start, size_t line_len);
 
 #endif

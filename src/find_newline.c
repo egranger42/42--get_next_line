@@ -1,37 +1,36 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   gnl_end.c                                          :+:      :+:    :+:   */
+/*   find_newline.c                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: egranger <egranger@42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/11/09 10:01:01 by egranger          #+#    #+#             */
-/*   Updated: 2025/11/09 10:01:04 by egranger         ###   ########.fr       */
+/*   Created: 2025/11/10 10:00:00 by egranger          #+#    #+#             */
+/*   Updated: 2025/11/10 10:00:00 by egranger         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../inc/get_next_line.h"
 
-int	gnl_end(t_gnl_state *state, t_gnl_vars *vars)
+int	find_newline(t_node *start, size_t *line_len)
 {
-	char	*temp;
+	t_node	*curr;
+	size_t	i;
+	size_t	total;
 
-	if (vars->i + 1 >= vars->capacity)
+	total = 0;
+	curr = start;
+	while (curr)
 	{
-		vars->capacity *= 2;
-		temp = realloc(vars->line, vars->capacity);
-		if (!temp)
+		i = 0;
+		while (i < curr->size)
 		{
-			free(vars->line);
-			return (-1);
+			if (curr->buffer[curr->offset + i] == '\n')
+				return (*line_len = total + i + 1, 1);
+			i++;
 		}
-		vars->line = temp;
+		total += curr->size;
+		curr = curr->next;
 	}
-	vars->line[vars->i++] = state->buffer[state->pos++];
-	if (vars->line[vars->i - 1] == '\n')
-	{
-		vars->line[vars->i] = '\0';
-		return (1);
-	}
-	return (0);
+	return (*line_len = total, 0);
 }

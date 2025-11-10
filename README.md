@@ -1,13 +1,17 @@
 # get_next_line
 
-Reads lines from a file descriptor one at a time, with buffered I/O.
+Buffered line reader for file descriptors. Reads one line at a time using static per-fd buffers.
 
-## Features
+## API
 
-- Reads entire lines from any file descriptor
-- Handles multiple file descriptors independently
-- Configurable buffer size (default: 4096 bytes)
-- Memory management with automatic state tracking
+**`char *get_next_line(int fd)`**
+- Returns next line (including `\n`), or `NULL` on EOF/error
+- Caller must `free()` returned strings
+- Maintains independent buffers for each fd
+
+**`void get_next_line_flush(int fd)`**
+- Clears buffer for fd (pass `-1` to flush all)
+- Use after `close(fd)` to avoid collision with reused fd numbers
 
 ## Usage
 
@@ -15,28 +19,32 @@ Reads lines from a file descriptor one at a time, with buffered I/O.
 #include "get_next_line.h"
 
 char *line;
+int fd = open("file.txt", O_RDONLY);
 while ((line = get_next_line(fd)) != NULL)
 {
     printf("%s\n", line);
     free(line);
 }
+close(fd);
+get_next_line_flush(fd);
 ```
-
-Returns the next line including the newline, or NULL on EOF/error.
 
 ## Build
 
-```bash
-make          # Build library
-make clean    # Remove object files
-make fclean   # Remove all generated files
-make re       # Rebuild everything
+```
+make        # Build libgnl.a
+make clean  # Remove .o files
+make fclean # Remove library
+make re     # Rebuild
 ```
 
 ## Configuration
 
-Modify `GNL_BUFFER_SIZE` in `get_next_line.h` to change the read buffer size.
+Define `BUFFER_SIZE` at compile time (default: 42 bytes):
+```
+cc -DBUFFER_SIZE=4096 ...
+```
 
-## Implementation Details
+## Known Limitation: FD Collision
 
-Uses static state management to maintain buffer and position across multiple calls, allowing reading without re-buffering entire files.
+When OS reuses a closed fd number for a new file, `get_next_line` returns stale buffered data from the old file. **Always call `get_next_line_flush(fd)` after closing** to prevent this.
